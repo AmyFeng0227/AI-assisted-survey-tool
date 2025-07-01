@@ -1,0 +1,14 @@
+QuestionID,Question,Type,Field,Options,answer,certainty,text_field,source,last_updated
+1,Participant ID,number,info,,25362,high,,ai,2025-07-01 11:58:40
+2,Are you in debt?,single choice,economy,yes; no,,,,,
+3,Are you stressed about your financial situation?,single choice,economy,Not at all stressed; Slightly stressed; Quite stressed; Very stressed,Quite stressed,medium,Expressed stress about living situation and finances,ai,2025-07-01 11:58:40
+4,How do you live today?/How is your accomondation situation today?,text,accommodation,,I live in social services arranged accommodation but am unsure where I will live in three months.,high,,ai,2025-07-01 11:58:40
+5,Do you want help with accommodation,single choice,accommodation,yes; no,yes,high,Needs assistance finding stable housing after leaving care,ai,2025-07-01 11:58:40
+6,How do you feel?,text,health,,Generally good but stressed and anxious about my living situation and future.,high,,ai,2025-07-01 11:58:40
+7,How would you rate your mental health?,single choice,health,Very poor; Quite poor; Quite good; Very good,Quite poor,medium,Experiencing anxiety and stress about future,ai,2025-07-01 11:58:40
+8,Do you currently have any ongoing contact with healthcare services?,single choice,health,yes; no,yes,high,Attending sessions with one assigned psychologist,ai,2025-07-01 11:58:40
+9,Do you want support for your mental or physical health?,single choice,health,yes; no,no,high,Does not trust healthcare providers and declines support,ai,2025-07-01 11:58:40
+10,How often do you feel lonely?,single choice,social network,Never; Occasionally; Frequently; Almost always,,,,,
+11,What do you do during the day?,multiple choice,work,Working; Studying; Internship; Unemployed; On sick leave,['Studying'],high,Currently attending school and focusing on studies,ai,2025-07-01 11:58:40
+12,What is your short-term and long-term goal? ,text,work,,Short-term: complete school and learn requirements to enter healthcare studies; Long-term: become a doctor or nurse.,high,,ai,2025-07-01 11:58:40
+13,Do you want support related to work? What kind of support would that be?,single choice,work,yes; no,yes,high,Wants support finding a job and guidance on career path for healthcare,ai,2025-07-01 11:58:40
