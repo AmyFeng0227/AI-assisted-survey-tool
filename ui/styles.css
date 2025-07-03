@@ -1,0 +1,154 @@
+/* Custom CSS for colored containers and styling */
+.high-certainty, .medium-certainty, .low-certainty, .unanswered {
+    border-left: 3px solid;
+    padding: 2px 4px;
+    border-radius: 1px;
+    margin: 0;
+    font-size: 0.9em;
+}
+.high-certainty {
+    background-color: #e8f5e9;
+    border-left-color: #28a745;
+}
+.medium-certainty {
+    background-color: #fff8e1;
+    border-left-color: #ffc107;
+}
+.low-certainty {
+    background-color: #ffebee;
+    border-left-color: #dc3545;
+}
+.unanswered {
+    background-color: #f5f5f5;
+    border-left-color: #6c757d;
+}
+.question-header {
+    margin: 0;
+    padding: 0;
+    line-height: 1.1;
+}
+.field-tag {
+    color: #666;
+    font-size: 0.8em;
+    font-weight: normal;
+}
+.question-id {
+    font-weight: bold;
+    color: #333;
+    font-size: 0.85em;
+}
+.question-text {
+    font-size: 0.9em;
+    margin: 1px 0;
+}
+.answer-text {
+    margin: 2px 0 0 0;
+    padding-left: 6px;
+    border-left: 1px solid rgba(0,0,0,0.1);
+    font-size: 0.85em;
+    color: #2c3e50;
+}
+.selected-option, .unselected-option {
+    white-space: nowrap;
+}
+.selected-option {
+    font-weight: bold;
+    color: #2c3e50;
+}
+.unselected-option {
+    color: #666;
+    font-style: italic;
+}
+.option-list {
+    margin: 2px 0 0 6px;
+    font-size: 0.85em;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.notes-text {
+    margin: 1px 0 0 6px;
+    font-size: 0.8em;
+    color: #666;
+    font-style: italic;
+}
+.streamlit-expanderHeader {
+    padding: 0.1rem !important;
+    font-size: 0.75em !important;
+    min-height: 0 !important;
+    line-height: 1 !important;
+}
+.streamlit-expanderHeader > span {
+    padding: 0 !important;
+    margin: 0 !important;
+}
+.streamlit-expanderHeader > div {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+.streamlit-expanderHeader > div > span {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+.streamlit-expanderHeader svg {
+    width: 12px !important;
+    height: 12px !important;
+    margin: 0 4px 0 0 !important;
+}
+.streamlit-expanderContent {
+    padding: 0.2rem !important;
+}
+.streamlit-expander {
+    border-radius: 2px !important;
+    border: none !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+}
+.stTextInput, .stTextArea {
+    margin: 0 !important;
+    padding: 0 !important;
+    font-size: 0.8em !important;
+}
+.stTextInput > div {
+    padding: 0 !important;
+}
+.stTextArea > div {
+    padding: 0 !important;
+}
+.stTextInput input {
+    padding: 0.2rem !important;
+}
+.stTextArea textarea {
+    padding: 0.2rem !important;
+    min-height: 50px !important;
+}
+.stRadio > label {
+    margin: 0 !important;
+    padding: 0 !important;
+    height: auto !important;
+    font-size: 0.8em !important;
+}
+.stRadio > div {
+    margin: 0 !important;
+    padding: 0 !important;
+    gap: 0.5rem !important;
+}
+.stRadio [role="radiogroup"] {
+    margin: 0 !important;
+    padding: 0 !important;
+    gap: 0.25rem !important;
+}
+.stMultiSelect > label {
+    margin: 0 !important;
+    padding: 0 !important;
+    height: auto !important;
+    font-size: 0.8em !important;
+}
+.stMultiSelect > div {
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: 0 !important;
+}
+.stMultiSelect [data-baseweb="select"] {
+    font-size: 0.8em !important;
+} 
