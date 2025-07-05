@@ -16,6 +16,8 @@ __pycache__/
 
 # Data files - temporary tracking and output files
 *.csv
+*.xlsx
+*.m4a
 
 # Log files
 *.log

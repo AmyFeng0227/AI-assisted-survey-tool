@@ -38,7 +38,7 @@ def prepare_survey(excel_name):
         return None, None
 
 
-def process_recording(recording_name, survey_questions, df):
+def process_recording(recording_name, survey_questions, df, file_extension=None):
     """
     Process a single recording using the prepared survey.
     
@@ -46,12 +46,13 @@ def process_recording(recording_name, survey_questions, df):
         recording_name (str): Name of the recording file (without extension)
         survey_questions (str): Formatted survey questions for prompts
         df (pd.DataFrame): DataFrame with survey questions and answer columns
+        file_extension (str): File extension (m4a, mp4, etc.)
         
     Returns:
         pd.DataFrame: Updated DataFrame with new answers
     """
     # Process recording
-    transcript = process_audio_file(recording_name)
+    transcript = process_audio_file(recording_name, file_extension)
     if not transcript:
         return df
     
@@ -81,8 +82,8 @@ def process_recording(recording_name, survey_questions, df):
     # Process response and update tracking
     new_answers = process_ai_response(response_text, prompt)
     if new_answers:
-        update_answers_file(new_answers)
-        df = update_answers_dataframe(df, new_answers)
+        update_answers_file(new_answers, "ai")
+        df = update_answers_dataframe(df, new_answers, "ai")
         
         # Save current state of DataFrame with timestamp
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")

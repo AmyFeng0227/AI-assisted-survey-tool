@@ -54,7 +54,7 @@ def process_ai_response(response_text, prompt):
 
 
 
-def update_answers_file(new_answers):
+def update_answers_file(new_answers, source):
     """
     Create or update the answers.json file with new answers.
     
@@ -72,11 +72,15 @@ def update_answers_file(new_answers):
         # Update with new answers
         for item in new_answers:
             qid = item["question_id"]
+            if source == "ai":
+                certainty = item["certainty"]
+            else:
+                certainty = "high"
             answers[qid] = {
                 "answer": item["answer"],
-                "certainty": item["certainty"],
+                "certainty": certainty,
                 "text field": item.get("text field", ""),
-                "source": "ai",
+                "source": source,
                 "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             }
         
@@ -87,7 +91,7 @@ def update_answers_file(new_answers):
     except Exception as e:
         print(f"Error updating answers file: {e}")
 
-def update_answers_dataframe(df, new_answers):
+def update_answers_dataframe(df, new_answers, source):
     """
     Update tracking DataFrame with new answers.
     
@@ -100,12 +104,16 @@ def update_answers_dataframe(df, new_answers):
     """
     # Update the DataFrame with new answers
     for answer in new_answers:
-        qid = float(answer["question_id"])  # Convert to float since QuestionID is float
+        qid = float(answer["question_id"]) 
+        if source == "ai":
+            certainty = answer["certainty"]
+        else:
+            certainty = "high"
         if qid in df.index:
             df.at[qid, 'answer'] = answer["answer"]
-            df.at[qid, 'certainty'] = answer["certainty"]
+            df.at[qid, 'certainty'] = certainty
             df.at[qid, 'text_field'] = answer.get("text field", "")
-            df.at[qid, 'source'] = "ai"
+            df.at[qid, 'source'] = source
             df.at[qid, 'last_updated'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
     return df

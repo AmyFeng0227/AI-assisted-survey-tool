@@ -5,6 +5,11 @@
 # Automatically reruns the app when files are saved
 runOnSave = true
 
+# File watcher settings for better reliability
+fileWatcherType = "auto"
+enableCORS = false
+enableXsrfProtection = false
+
 
 
 [theme]

@@ -3,7 +3,7 @@ import os
 from datetime import datetime
 import pandas as pd
 import streamlit as st
-from ui.survey_app import save_answers, display_progress_metrics, handle_question_edit, save_uploaded_survey, save_uploaded_audio, divide_and_sort_questions, extract_question_object, extract_answer_data, display_question_and_answer, display_question_with_edit_visual
+from ui.survey_app import save_uploaded_survey, save_uploaded_audio, divide_and_sort_questions, extract_question_object, extract_answer_data, display_edit_window
 from app.main_workflow import prepare_survey, process_recording
 
 
@@ -21,6 +21,12 @@ with open('ui/styles.css') as f:
 
 def main():
     st.title("AI-assisted survey")
+    
+    # Debug: Add manual cache clear button
+    if st.button("🔄 Clear Cache & Reload"):
+        st.cache_data.clear()
+        st.cache_resource.clear()
+        st.rerun()
 
     # Load custom CSS
     with open('ui/styles.css') as f:
@@ -49,17 +55,18 @@ def main():
 
     # Audio file uploader
     with col2:
-        uploaded_audio = st.file_uploader("Upload an audio file", type=["m4a"])
+        uploaded_audio = st.file_uploader("Upload an audio file", type=["m4a", "mp4"])
         if uploaded_audio and "df" in st.session_state and "survey_data" in st.session_state:
             # Create a unique identifier for this audio file
             audio_id = f"{uploaded_audio.name}_{uploaded_audio.size}"
             
             if audio_id not in st.session_state["processed_audio_files"]:
-                audio_name = save_uploaded_audio(uploaded_audio)
+                audio_name, file_extension = save_uploaded_audio(uploaded_audio)
                 st.session_state["df"] = process_recording(
                     audio_name, 
                     st.session_state["survey_data"], 
-                    st.session_state["df"]
+                    st.session_state["df"],
+                    file_extension
                 )
                 st.session_state["processed_audio_files"].add(audio_id)
                 st.write(f'Survey answers successfully updated!')
@@ -97,23 +104,16 @@ def main():
                 answer_data = extract_answer_data(row)
                 container_class = f"{row['certainty']}-certainty"
                 
-                # Use the visual-only edit function for now
-                display_question_with_edit_visual(question, answer_data, container_class, idx)
-                
-                st.markdown("<br>", unsafe_allow_html=True)  # Add spacing
-        
+                display_edit_window(question, answer_data, container_class, idx)
+
         # Display unanswered questions
         with right_col:
             st.subheader("Unanswered:")
             for idx, row in unanswered_questions.iterrows():
                 question = extract_question_object(idx, row)
                 answer_data = extract_answer_data(row)
-                
-                # Use the visual-only edit function for now
-                display_question_with_edit_visual(question, answer_data, 'unanswered', idx)
-                
-                st.markdown("<br>", unsafe_allow_html=True)  # Add spacing
 
-    
+                display_edit_window(question, answer_data, 'unanswered', idx)
+
 if __name__ == "__main__":
     main() 

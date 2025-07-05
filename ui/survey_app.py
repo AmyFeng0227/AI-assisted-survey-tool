@@ -3,6 +3,7 @@ from datetime import datetime
 import pandas as pd
 import os
 import streamlit as st
+from app.answer import update_answers_file, update_answers_dataframe
 
 # === Survey file uploader ===
 def save_uploaded_survey(uploaded_file):
@@ -27,28 +28,34 @@ def save_uploaded_survey(uploaded_file):
 def save_uploaded_audio(uploaded_audio):
     """Save an uploaded audio file to the data/recordings directory with a timestamped name."""
     if uploaded_audio is not None:
+        # Get the original file extension
+        original_extension = uploaded_audio.name.split('.')[-1].lower()
+        
         # Create a timestamped filename
         timestamp = datetime.now().strftime("%Y%m%d_%H%M")
         audio_name = f"recording_{timestamp}"
         
-        # Save the file
-        file_path = 'data/recordings/'+ audio_name+".m4a"
+        # Save the file with original extension
+        file_path = f'data/recordings/{audio_name}.{original_extension}'
         with open(file_path, "wb") as f:
             f.write(uploaded_audio.getvalue())
         
-        print(f"File saved as {audio_name}.m4a")
-        return audio_name
-    
+        print(f"File saved as {audio_name}.{original_extension}")
+        return audio_name, original_extension
+
+# === Divide and sort questions ===
 def divide_and_sort_questions(df):
     """Divide questions into answered and unanswered"""
-    answered_questions = df[df['certainty'].notna()].sort_values(by='last_updated', ascending=False)
+    answered_questions = df[df['certainty'].notna()].sort_values(by='QuestionID')
     unanswered_questions = df[df['certainty'].isna()].sort_values(by='QuestionID')
     return answered_questions, unanswered_questions
 
+
+# === sub-function for displaying questions ===
 def extract_question_object(idx, row):
     """Create a question object"""
     question = {
-        'id': str(idx),
+        'id': idx, 
         'field': row['Field'],
         'question': row['Question'],
         'type': row['Type'].lower() if 'Type' in row else 'text',
@@ -56,6 +63,7 @@ def extract_question_object(idx, row):
     }
     return question
 
+# === sub-function for displaying answers ===
 def extract_answer_data(row):
     """Create an answer data object"""
     answer_data = {
@@ -66,6 +74,7 @@ def extract_answer_data(row):
     return answer_data
 
 
+# === main function for displaying questions and answers ===
 def display_question_and_answer(question, answer_data, container_class):
     """
     Format a question and its answer with proper styling.
@@ -83,8 +92,8 @@ def display_question_and_answer(question, answer_data, container_class):
     
     if answer_data.get('answer'):
         if question['type'] in ['single choice', 'multiple choice']:
-            # Handle choice questions
-            current_selections = answer_data['answer']
+            # Handle choice questions - answers are always lists
+            current_selections = answer_data.get('answer')
 
             options_display = []
             for opt in question['options']:
@@ -95,7 +104,7 @@ def display_question_and_answer(question, answer_data, container_class):
             answer_display = f'<div class="option-list">' + ' '.join(options_display) + '</div>'
         else:
             # Handle text questions
-            answer_display = f"<div class='answer-text'>{answer_data['answer']}</div>"
+            answer_display = f"<div class='answer-text'>{answer_data.get('answer')}</div>"
         
         # Add notes if present
         if answer_data.get('text field'):
@@ -120,217 +129,53 @@ def display_question_and_answer(question, answer_data, container_class):
     """
 
 
-
-def save_answers(answers, survey_name=None):
-    """Save updated answers to file"""
-    try:
-        with open('data/answers.json', 'w') as f:
-            json.dump(answers, f, indent=2)
-        
-        # Also update the tracking DataFrame if survey_name is provided
-        if survey_name:
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            df = pd.read_excel(f"data/surveys/{survey_name}.xlsx", engine="openpyxl")
-            df.set_index('QuestionID', inplace=True)
-        
-    except Exception as e:
-        print(f"Error saving answers: {e}")
-
-
-def display_progress_metrics(survey, answers):
-    """Display progress metrics for the survey"""
-    # Implementation of progress metrics
-    pass
-
-
-
-
-def handle_question_edit(question, current_answer, qid, answers):
-    """Helper function to handle question editing"""
-    # Initialize variables
-    new_answer = current_answer.get('answer', '')
-    new_text_field = current_answer.get('text field', '')
-    changes_made = False
-    
-    # Logic for editing questions
-    # This function should be called from the Streamlit app with the necessary UI components
-    return changes_made
-
-def display_question_with_edit(question, answer_data, container_class, qid):
+# === sub-function for Save changes button ===
+def save_changes(question_id, question_type):
     """
-    Display a question with edit functionality using Streamlit widgets.
+    Save user changes to both the answers file and DataFrame.
     
     Args:
-        question (dict): Question object with id, field, question, type, and options
-        answer_data (dict): Answer object with answer, certainty, and text field
-        container_class (str): CSS class for styling
-        qid: Question ID for unique widget keys
-    
-    Returns:
-        dict: Updated answer data if changes were made, None if no changes
+        question_id: The question ID
+        question_type (str): Type of question ('single choice', 'multiple choice', 'text')
     """
-    # Display question header
-    st.markdown(f"""
-    <div class="{container_class}">
-        <div class="question-header">
-            <span class="question-id">Q{question['id']}</span>
-            <span class="field-tag">[{question['field']}]</span>
-        </div>
-        <div class="question-text">{question['question']}</div>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Show current answer if exists
-    if answer_data.get('answer'):
-        if question['type'] in ['single choice', 'multiple choice']:
-            current_selections = answer_data['answer'] if isinstance(answer_data['answer'], list) else [answer_data['answer']]
-            options_display = []
-            for opt in question['options']:
-                if opt in current_selections:
-                    options_display.append(f'✓ {opt}')
-                else:
-                    options_display.append(f'○ {opt}')
-            st.markdown(f"**Current:** {' | '.join(options_display)}")
-        else:
-            st.markdown(f"**Current:** {answer_data['answer']}")
-        
-        if answer_data.get('certainty'):
-            st.markdown(f"**Certainty:** {answer_data['certainty']}")
-        
-        if answer_data.get('text field'):
-            st.markdown(f"**Notes:** {answer_data['text field']}")
-    
-    # Add edit section with expander
-    with st.expander("✏️ Edit Answer", expanded=False):
-        changes_made = False
-        new_answer_data = answer_data.copy()
-        
-        # Handle different question types
-        if question['type'] == 'single choice':
-            current_answer = answer_data.get('answer', '')
-            if isinstance(current_answer, list):
-                current_answer = current_answer[0] if current_answer else ''
-            
-            selected_option = st.selectbox(
-                "Select answer:",
-                options=[''] + question['options'],
-                index=question['options'].index(current_answer) + 1 if current_answer in question['options'] else 0,
-                key=f"select_{qid}"
-            )
-            
-            if selected_option != current_answer:
-                new_answer_data['answer'] = [selected_option] if selected_option else ''
-                changes_made = True
-        
-        elif question['type'] == 'multiple choice':
-            current_answer = answer_data.get('answer', [])
-            if not isinstance(current_answer, list):
-                current_answer = [current_answer] if current_answer else []
-            
-            selected_options = st.multiselect(
-                "Select answers:",
-                options=question['options'],
-                default=current_answer,
-                key=f"multiselect_{qid}"
-            )
-            
-            if set(selected_options) != set(current_answer):
-                new_answer_data['answer'] = selected_options
-                changes_made = True
-        
+    try:
+        # Get the current values from the form inputs
+        if question_type == 'single choice':
+            answer_value = [st.session_state[f"select_{question_id}"]] if st.session_state[f"select_{question_id}"] else []
+            notes_value = st.session_state.get(f"notes_{question_id}", "")
+        elif question_type == 'multiple choice':
+            answer_value = st.session_state[f"multiselect_{question_id}"]
+            notes_value = st.session_state.get(f"notes_{question_id}", "")
         else:  # text question
-            current_answer = answer_data.get('answer', '')
-            new_answer = st.text_area(
-                "Answer:",
-                value=current_answer,
-                key=f"text_{qid}"
-            )
-            
-            if new_answer != current_answer:
-                new_answer_data['answer'] = new_answer
-                changes_made = True
+            answer_value = st.session_state[f"text_{question_id}"]
+            notes_value = ""  # Text questions don't have notes
         
-        # Certainty level
-        current_certainty = answer_data.get('certainty', '')
-        new_certainty = st.selectbox(
-            "Certainty level:",
-            options=['', 'low', 'medium', 'high'],
-            index=['', 'low', 'medium', 'high'].index(current_certainty) if current_certainty in ['', 'low', 'medium', 'high'] else 0,
-            key=f"certainty_{qid}"
-        )
+        # Format the answer data for the update functions
+        new_answer = {
+            "question_id": question_id,
+            "answer": answer_value,
+            "text field": notes_value
+        }
         
-        if new_certainty != current_certainty:
-            new_answer_data['certainty'] = new_certainty
-            changes_made = True
+        # Update the answers file
+        update_answers_file([new_answer], "human")
         
-        # Text field/notes
-        current_text_field = answer_data.get('text field', '')
-        new_text_field = st.text_area(
-            "Notes:",
-            value=current_text_field,
-            key=f"notes_{qid}"
-        )
+        # Update the DataFrame in session state
+        st.session_state["df"] = update_answers_dataframe(st.session_state["df"], [new_answer], "human")
         
-        if new_text_field != current_text_field:
-            new_answer_data['text field'] = new_text_field
-            changes_made = True
+        # Collapse the expander after saving
+        expander_key = f"expander_{question_id}"
+        st.session_state[expander_key] = False
         
-        # Save button
-        if st.button("💾 Save Changes", key=f"save_{qid}"):
-            if changes_made:
-                new_answer_data['last_updated'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                new_answer_data['source'] = 'manual'
-                return new_answer_data
-            else:
-                st.info("No changes to save")
-    
-    return None
-
-def update_question_answer(df, qid, new_answer_data):
-    """
-    Update DataFrame and answers.json with new answer data.
-    
-    Args:
-        df (pd.DataFrame): The survey DataFrame
-        qid: Question ID
-        new_answer_data (dict): New answer data
-    
-    Returns:
-        pd.DataFrame: Updated DataFrame
-    """
-    # Update DataFrame
-    qid_float = float(qid)
-    if qid_float in df.index:
-        df.at[qid_float, 'answer'] = new_answer_data['answer']
-        df.at[qid_float, 'certainty'] = new_answer_data['certainty']
-        df.at[qid_float, 'text_field'] = new_answer_data['text field']
-        df.at[qid_float, 'source'] = new_answer_data['source']
-        df.at[qid_float, 'last_updated'] = new_answer_data['last_updated']
-    
-    # Update answers.json
-    try:
-        # Load existing answers
-        if os.path.exists("data/answers.json"):
-            with open("data/answers.json", "r") as f:
-                answers = json.load(f)
-        else:
-            answers = {}
+        return True
         
-        # Update with new answer
-        answers[str(qid)] = new_answer_data
-        
-        # Save back to file
-        with open("data/answers.json", "w") as f:
-            json.dump(answers, f, indent=2)
-    
     except Exception as e:
-        print(f"Error updating answers file: {e}")
-    
-    return df
+        st.error(f"Error saving changes: {e}")
+        return False
 
-def display_question_with_edit_visual(question, answer_data, container_class, qid):
+def display_edit_window(question, answer_data, container_class, qid):
     """
-    Display a question with expandable edit section - VISUAL ONLY for now.
+    Display a question with expandable edit section.
     
     Args:
         question (dict): Question object with id, field, question, type, and options
@@ -344,16 +189,18 @@ def display_question_with_edit_visual(question, answer_data, container_class, qi
         unsafe_allow_html=True
     )
     
+    # Track expander state for each question
+    expander_key = f"expander_{qid}"
+    if expander_key not in st.session_state:
+        st.session_state[expander_key] = False
+    
     # Add expandable edit section
-    with st.expander("✏️ Edit Answer", expanded=False):
+    with st.expander("✏️ Edit Answer", expanded=st.session_state[expander_key]):
         
         # Show different input types based on question type
         if question['type'] == 'single choice':
-            # Single choice answers are always lists with one element
-            # Handle None values for unanswered questions
-            answer_list = answer_data.get('answer') or ['']
-            current_answer = answer_list[0]
-            
+            # Single choice answers are lists, get first item or empty string
+            current_answer = answer_data.get('answer', [''])[0] if answer_data.get('answer') else ''
             st.selectbox(
                 "Select a single answer:",
                 options=[''] + question['options'],
@@ -362,10 +209,8 @@ def display_question_with_edit_visual(question, answer_data, container_class, qi
             )
         
         elif question['type'] == 'multiple choice':
-            # Multiple choice answers are always lists
-            # Handle None values for unanswered questions
-            current_answer = answer_data.get('answer') or []
-            
+            # Multiple choice answers are lists
+            current_answer = answer_data.get('answer', [])
             st.multiselect(
                 "Select multiple answers:",
                 options=question['options'],
@@ -374,19 +219,16 @@ def display_question_with_edit_visual(question, answer_data, container_class, qi
             )
         
         else:  # text question
-            # Handle None values for unanswered questions
             current_answer = answer_data.get('answer') or ''
-            
             st.text_area(
                 "Answer:",
-                value=str(current_answer) if current_answer else '',
+                value=current_answer,
                 key=f"text_{qid}",
                 height=100
             )
         
         # Text field/notes - only show for choice questions, not text questions
         if question['type'] in ['single choice', 'multiple choice']:
-            # Handle None values for unanswered questions
             current_text_field = answer_data.get('text field') or ''
             st.text_area(
                 "Notes:",
@@ -395,7 +237,12 @@ def display_question_with_edit_visual(question, answer_data, container_class, qi
                 height=100
             )
         
-        # Action buttons (just visual for now)
+        # Action buttons
         if st.button("💾 Save Changes", key=f"save_{qid}"):
-            st.info("Save functionality will be added next!")
+            # Save the changes
+            if save_changes(qid, question['type']):
+                st.success("Changes saved successfully!")
+                st.rerun()  # Force app to refresh and show updated data
+            else:
+                st.error("Failed to save changes!")
 
