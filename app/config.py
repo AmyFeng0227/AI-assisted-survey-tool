@@ -5,3 +5,4 @@ import os
 # Initialize OpenAI client
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY_survey"))
+model="o4-mini-2025-04-16"

@@ -1,11 +1,10 @@
 from .survey import process_survey_excel, format_survey_questions
 from .audio import process_audio_file
 from .prompt import create_prompt_without_answers, create_prompt_with_answers
-from .answer import process_ai_response, update_answers_file, update_answers_dataframe
+from .answer import process_ai_response, update_answers_file, update_answers_dataframe, get_ai_response
 import json
 import os
 from datetime import datetime
-from .config import client
 
 def prepare_survey(excel_name):
     """
@@ -59,6 +58,7 @@ def process_recording(recording_name, survey_questions, df):
     # Check if answers.json exists
     if os.path.exists("data/answers.json"):
         # Get previous answers as string
+        print("answers.json found, generating follow-up prompt")
         with open("data/answers.json", "r") as f:
             previous_answers = json.load(f)
         previous_answers_str = "Previous answers (for reference): \n"
@@ -73,15 +73,13 @@ def process_recording(recording_name, survey_questions, df):
         prompt = create_prompt_with_answers(survey_questions, previous_answers_str, transcript)
     else:
         # Generate initial prompt and get AI response
+        print("answers.json not found, generating initial prompt")
         prompt = create_prompt_without_answers(survey_questions, transcript)
     
-    response = client.chat.completions.create(
-        model="o4-mini-2025-04-16",
-        messages=[{"role": "user", "content": prompt}]
-    )
+    response_text = get_ai_response(prompt)
     
     # Process response and update tracking
-    new_answers = process_ai_response(response.choices[0].message.content)
+    new_answers = process_ai_response(response_text, prompt)
     if new_answers:
         update_answers_file(new_answers)
         df = update_answers_dataframe(df, new_answers)

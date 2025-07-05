@@ -20,9 +20,10 @@ def process_audio_file(file_name):
                 file=audio_file
             )
             # Save transcription to text file
-            txt_path = Path("data/transcripts/"+file_name).with_suffix('.txt')
+            txt_path = "data/recordings/transcripts/"+file_name+'.txt'
             with open(txt_path, 'w', encoding='utf-8') as txt_file:
                 txt_file.write(transcription.text)
+
 
             return transcription.text
     except Exception as e:

@@ -17,6 +17,7 @@ def create_prompt_without_answers(survey_questions, transcript):
 3. Text field: All single/multiple choice questions must have a concise text reasoning, but make sure you cover all the relevant information related to the question. If not choice-based, leave blank.
 
 Notes:
+Answers to single or multiple choice questions should be in a list.
 Output only for the questions that are clearly addressed in the transcript. 
 Do not make up information, follow the transcript.
 Format your response as a JSON array, nothing else.
@@ -31,7 +32,7 @@ output example:
 [
   {{
     "question_id": "5",
-    "answer": "yes",
+    "answer": ["housing", "education"],
     "certainty": "high",
     "text field": "support in finding an apartment is urgent. Prefer first-hand contract"
   }},
@@ -72,6 +73,7 @@ Second, find answers in the new transcript for questions not answered previously
 - Only fill out the answer if the transcript has clearly addressed the question.
 
 important:
+- Answers to single or multiple choice questions should be in a list. 
 - Only answer the questions that are clearly addressed in the transcript.
 - Output ONLY for the updated answers and newly answered questions. 
 - Do not make up information, follow the transcript.
@@ -90,7 +92,7 @@ output example:
 [
   {{
     "question_id": "5",
-    "answer": "yes",
+    "answer": ["housing", "education"],
     "certainty": "high",
     "text field": "support in finding an apartment is urgent. Prefer first-hand contract"
   }},

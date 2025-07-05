@@ -1,23 +1,56 @@
 import json
 from datetime import datetime
+from openai import OpenAI
+from .config import client, model
+
+def get_ai_response(prompt):
+    """
+    Get response from OpenAI API.
+    
+    Args:
+        prompt (str): The prompt to send to the API
+        
+    Returns:
+        str: The API response text
+    """
+    response = client.chat.completions.create(
+        model=model,
+        messages=[{"role": "user", "content": prompt}]
+    )
+    return response.choices[0].message.content
 
 # === Answer processing ===
 
-def process_ai_response(response_text):
+def process_ai_response(response_text, prompt):
     """
     Process AI's response and convert to proper format.
     
     Args:
         response_text (str): Raw response from AI
+        prompt (str): Original prompt used to generate response
         
     Returns:
         list: Processed answers
     """
     try:
-        return json.loads(response_text)
+        new_answers = json.loads(response_text)
+        print(f"New answers: {new_answers}")
+        return new_answers
     except json.JSONDecodeError as e:
-        print(f"Error processing AI response: {e}")
-        return None
+        if str(e) == "Expecting value: line 1 column 1 (char 0)":
+            print("Invalid JSON response, retrying API call...")
+            # Retry the API call once
+            new_response = get_ai_response(prompt)
+            try:
+                new_answers = json.loads(new_response)  
+                print(f"New answers: {new_answers}")
+                return new_answers
+            except json.JSONDecodeError as e2:
+                print(f"Error processing retry response: {e2}")
+                return None
+        else:
+            print(f"Error processing AI response: {e}")
+            return None
 
 
 
@@ -44,7 +77,7 @@ def update_answers_file(new_answers):
                 "certainty": item["certainty"],
                 "text field": item.get("text field", ""),
                 "source": "ai",
-                "last_updated": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+                "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             }
         
         # Save updated answers
@@ -73,6 +106,6 @@ def update_answers_dataframe(df, new_answers):
             df.at[qid, 'certainty'] = answer["certainty"]
             df.at[qid, 'text_field'] = answer.get("text field", "")
             df.at[qid, 'source'] = "ai"
-            df.at[qid, 'last_updated'] = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+            df.at[qid, 'last_updated'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
     return df
