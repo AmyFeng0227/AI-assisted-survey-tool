@@ -1,6 +1,7 @@
 import pandas as pd
 import json
 from pathlib import Path
+import streamlit as st
 
 # === Survey Processing ===
 def process_survey_excel(excel_name):
@@ -66,12 +67,17 @@ def format_survey_questions(survey_data):
         str: Formatted survey questions
     """
     questions_text = ""
+    
     for question in survey_data:
-        questions_text += f"{question['id']}: [{question['field']}] {question['question']} ({question['type']}"
-        if question['options'] != ['']:
-            questions_text += f": {', '.join(question['options'])})\n"
-        else:
-            questions_text += ")\n"
+        # Only include questions that haven't been human-edited
+        # Convert question ID to float to match the data type in list_human_edit
+        question_id_float = float(question['id'])
+        if question_id_float not in st.session_state["list_human_edit"]:
+            questions_text += f"{question['id']}: [{question['field']}] {question['question']} ({question['type']}"
+            if question['options'] != ['']:
+                questions_text += f": {', '.join(question['options'])})\n"
+            else:
+                questions_text += ")\n"
     
     return questions_text
 

@@ -5,6 +5,7 @@ from .answer import process_ai_response, update_answers_file, update_answers_dat
 import json
 import os
 from datetime import datetime
+import streamlit as st
 
 def prepare_survey(excel_name):
     """
@@ -15,7 +16,7 @@ def prepare_survey(excel_name):
         excel_name (str): Name of the Excel file (without extension)
         
     Returns:
-        tuple: (formatted questions string for prompts, DataFrame ready for answers)
+        tuple: (raw survey data as list of question objects, DataFrame ready for answers)
     """
     try:
         # Step 1: Process Excel into structured formats
@@ -23,22 +24,16 @@ def prepare_survey(excel_name):
         if not survey_data:
             print("Failed to process Excel file")
             return None, None
-            
-        # Step 2: Format questions for prompts
-        survey_questions = format_survey_questions(survey_data)
-        if not survey_questions:
-            print("Failed to format questions")
-            return None, None
         
         print(f"Successfully prepared survey from {excel_name}.xlsx")
-        return survey_questions, df
+        return survey_data, df
         
     except Exception as e:
         print(f"Error preparing survey: {e}")
         return None, None
 
 
-def process_recording(recording_name, survey_questions, df, file_extension=None):
+def process_recording(recording_name, df, survey_data, file_extension=None):
     """
     Process a single recording using the prepared survey.
     
@@ -56,20 +51,25 @@ def process_recording(recording_name, survey_questions, df, file_extension=None)
     if not transcript:
         return df
     
+    survey_questions = format_survey_questions(survey_data)
+    if not survey_questions:
+            print("Failed to format questions")
+            return None, None
+    
     # Check if answers.json exists
     if os.path.exists("data/answers.json"):
         # Get previous answers as string
         print("answers.json found, generating follow-up prompt")
         with open("data/answers.json", "r") as f:
             previous_answers = json.load(f)
-        previous_answers_str = "Previous answers (for reference): \n"
+        previous_answers_str = ""
         for qid, answer_data in previous_answers.items():
-            previous_answers_str += f"{qid}: {answer_data['answer']} (certainty: {answer_data['certainty']})"
-            if answer_data['text field']:
-                previous_answers_str += f" - \"{answer_data['text field']}\"\n"
-            else:
-                previous_answers_str += "\n"
-        
+            if answer_data['source'] == "ai":
+                previous_answers_str += f"{qid}: {answer_data['answer']} (certainty: {answer_data['certainty']})"
+                if answer_data['text field']:
+                    previous_answers_str += f" - \"{answer_data['text field']}\"\n"
+
+        print(f'previous_answers_str: {previous_answers_str}')
         # Generate follow-up prompt and get AI response
         prompt = create_prompt_with_answers(survey_questions, previous_answers_str, transcript)
     else:

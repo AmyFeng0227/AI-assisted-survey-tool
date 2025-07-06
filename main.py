@@ -3,7 +3,7 @@ import os
 from datetime import datetime
 import pandas as pd
 import streamlit as st
-from ui.survey_app import save_uploaded_survey, save_uploaded_audio, divide_and_sort_questions, extract_question_object, extract_answer_data, display_edit_window
+from ui.survey_app import save_uploaded_survey, save_uploaded_audio, divide_and_sort_questions, extract_question_object, extract_answer_data, display_edit_window, create_excel_download
 from app.main_workflow import prepare_survey, process_recording
 
 
@@ -37,7 +37,9 @@ def main():
         st.session_state["survey_processed"] = False
     if "processed_audio_files" not in st.session_state:
         st.session_state["processed_audio_files"] = set()
-
+    if "list_human_edit" not in st.session_state:
+        st.session_state["list_human_edit"] = []
+        
     # Create two columns for file uploaders
     col1, col2 = st.columns(2)
 
@@ -56,7 +58,7 @@ def main():
     # Audio file uploader
     with col2:
         uploaded_audio = st.file_uploader("Upload an audio file", type=["m4a", "mp4"])
-        if uploaded_audio and "df" in st.session_state and "survey_data" in st.session_state:
+        if uploaded_audio and "df" in st.session_state:
             # Create a unique identifier for this audio file
             audio_id = f"{uploaded_audio.name}_{uploaded_audio.size}"
             
@@ -64,8 +66,8 @@ def main():
                 audio_name, file_extension = save_uploaded_audio(uploaded_audio)
                 st.session_state["df"] = process_recording(
                     audio_name, 
-                    st.session_state["survey_data"], 
                     st.session_state["df"],
+                    st.session_state["survey_data"], 
                     file_extension
                 )
                 st.session_state["processed_audio_files"].add(audio_id)
@@ -79,10 +81,27 @@ def main():
     if st.button("Reset Survey"):
         if os.path.exists("data/answers.json"):
             os.remove("data/answers.json")
-        for key in ["survey_processed", "processed_audio_files", "df", "survey_data", "current_survey_name"]:
+        for key in ["survey_processed", "processed_audio_files", "df", "survey_data", "current_survey_name", "excel_data", "list_human_edit"]:
             if key in st.session_state:
                 del st.session_state[key]
         st.rerun()
+
+    # Download Excel button (only show when data exists)
+    if "df" in st.session_state and not st.session_state["df"].empty:
+        survey_name = st.session_state.get("current_survey_name", "survey")
+        filename = f"{survey_name}_answers.xlsx"
+        
+        # Create Excel data once per session (cached until data changes)
+        if "excel_data" not in st.session_state or st.session_state["excel_data"] is None:
+            st.session_state["excel_data"] = create_excel_download(st.session_state["df"], survey_name)
+        
+        # Single download button
+        st.download_button(
+            label="📊 Download Excel", 
+            data=st.session_state["excel_data"],
+            file_name=filename,
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
 
     if "df" not in st.session_state:
         st.write("No survey loaded yet. Please upload a survey file and then an audio file.")
@@ -102,7 +121,12 @@ def main():
             for idx, row in answered_questions.iterrows():
                 question = extract_question_object(idx, row)
                 answer_data = extract_answer_data(row)
-                container_class = f"{row['certainty']}-certainty"
+                
+                # Check if human-edited first, otherwise use certainty-based coloring
+                if row['source'] == "human":
+                    container_class = "human-edited"
+                else:
+                    container_class = f"{row['certainty']}-certainty"
                 
                 display_edit_window(question, answer_data, container_class, idx)
 

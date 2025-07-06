@@ -1,5 +1,5 @@
 /* Custom CSS for colored containers and styling */
-.high-certainty, .medium-certainty, .low-certainty, .unanswered {
+.high-certainty, .medium-certainty, .low-certainty, .unanswered, .human-edited {
     border-left: 4px solid;
     padding: 4px 10px;
     border-radius: 6px;
@@ -7,7 +7,7 @@
     font-size: 1em;
 }
 .high-certainty {
-    background-color: #d2f7d4;
+    background-color: #c9f4cc;
     border-left-color: #28a745;
 }
 .medium-certainty {
@@ -21,6 +21,10 @@
 .unanswered {
     background-color: #edeff0;
     border-left-color: #a7aeb4;
+}
+.human-edited {
+    background-color: #9af3ae;
+    border-left-color: #28a745;
 }
 .question-header {
     margin: 0;

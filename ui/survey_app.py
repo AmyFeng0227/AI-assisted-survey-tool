@@ -3,6 +3,7 @@ from datetime import datetime
 import pandas as pd
 import os
 import streamlit as st
+from io import BytesIO
 from app.answer import update_answers_file, update_answers_dataframe
 
 # === Survey file uploader ===
@@ -160,8 +161,16 @@ def save_changes(question_id, question_type):
         # Update the answers file
         update_answers_file([new_answer], "human")
         
+        # Add to human edit list only if not already there (keep unique)
+        if question_id not in st.session_state["list_human_edit"]:
+            st.session_state["list_human_edit"].append(question_id)
+
         # Update the DataFrame in session state
         st.session_state["df"] = update_answers_dataframe(st.session_state["df"], [new_answer], "human")
+        
+        # Clear cached Excel data so it gets regenerated with new data
+        if "excel_data" in st.session_state:
+            st.session_state["excel_data"] = None
         
         # Collapse the expander after saving
         expander_key = f"expander_{question_id}"
@@ -245,4 +254,33 @@ def display_edit_window(question, answer_data, container_class, qid):
                 st.rerun()  # Force app to refresh and show updated data
             else:
                 st.error("Failed to save changes!")
+
+# === Download function ===
+def create_excel_download(df, survey_name="survey"):
+    """
+    Create an Excel file from the DataFrame for download.
+    
+    Args:
+        df (pd.DataFrame): The survey DataFrame to export
+        survey_name (str): Name of the survey for the filename
+        
+    Returns:
+        bytes: Excel file data as bytes
+    """
+    try:
+        # Create a BytesIO buffer to hold the Excel data
+        buffer = BytesIO()
+        
+        # Create Excel writer object
+        with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
+            # Write the main data
+            df.to_excel(writer, sheet_name='Survey_Results', index=True)
+        
+        # Return the Excel data as bytes
+        buffer.seek(0)
+        return buffer.getvalue()
+        
+    except Exception as e:
+        st.error(f"Error creating Excel file: {e}")
+        return None
 
