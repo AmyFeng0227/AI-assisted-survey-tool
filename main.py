@@ -3,8 +3,9 @@ import os
 from datetime import datetime
 import pandas as pd
 import streamlit as st
-from ui.survey_app import save_uploaded_survey, save_uploaded_audio, divide_and_sort_questions, extract_question_object, extract_answer_data, display_edit_window, create_excel_download
-from app.main_workflow import prepare_survey, process_recording
+from ui.survey_app import save_uploaded_survey, save_uploaded_audio, divide_and_sort_questions, extract_question_object, extract_answer_data, display_edit_window, create_excel_download, calculate_progress_data, create_progress_bar
+from app.main_workflow import prepare_survey, process_single_chunk
+from app.audio import process_audio_file, chunk_transcription_by_sentences
 
 
 
@@ -39,6 +40,90 @@ def main():
         st.session_state["processed_audio_files"] = set()
     if "list_human_edit" not in st.session_state:
         st.session_state["list_human_edit"] = []
+    # Chunked processing session state
+    if "chunked_processing" not in st.session_state:
+        st.session_state["chunked_processing"] = False
+    if "current_chunks" not in st.session_state:
+        st.session_state["current_chunks"] = []
+    if "current_chunk_index" not in st.session_state:
+        st.session_state["current_chunk_index"] = 0
+    if "processing_audio_name" not in st.session_state:
+        st.session_state["processing_audio_name"] = ""
+    if "processing_file_extension" not in st.session_state:
+        st.session_state["processing_file_extension"] = ""
+    if "should_auto_continue" not in st.session_state:
+        st.session_state["should_auto_continue"] = False
+        
+    # Sidebar for chunking settings
+    st.sidebar.header("⚙️ Chunking Settings")
+    sentences_per_chunk = st.sidebar.slider(
+        "Sentences per chunk", 
+        min_value=3, 
+        max_value=15, 
+        value=10, 
+        help="Number of sentences to include in each chunk"
+    )
+    overlap_sentences = st.sidebar.slider(
+        "Overlap sentences", 
+        min_value=0, 
+        max_value=5, 
+        value=2, 
+        help="Number of sentences to overlap between chunks"
+    )
+    st.sidebar.info(f"📊 Each chunk will have {sentences_per_chunk} sentences with {overlap_sentences} sentences overlapping from the previous chunk.")
+        
+    # Handle chunked processing
+    if st.session_state["chunked_processing"]:
+        chunks = st.session_state["current_chunks"]
+        current_index = st.session_state["current_chunk_index"]
+        
+        if current_index < len(chunks):
+            # Process current chunk
+            with st.spinner(f"Processing chunk {current_index + 1}/{len(chunks)}..."):
+                st.session_state["df"] = process_single_chunk(
+                    chunks[current_index],
+                    current_index + 1,
+                    len(chunks),
+                    st.session_state["df"],
+                    st.session_state["survey_data"]
+                )
+                
+            # Move to next chunk
+            st.session_state["current_chunk_index"] += 1
+            
+            # Show progress
+            st.success(f'✅ Chunk {current_index + 1}/{len(chunks)} completed!')
+            
+            # Check if more chunks to process
+            if st.session_state["current_chunk_index"] < len(chunks):
+                st.info(f"🔄 Ready to process chunk {st.session_state['current_chunk_index'] + 1}/{len(chunks)}")
+            else:
+                # All chunks processed
+                st.success(f'🎉 All {len(chunks)} chunks processed successfully!')
+                st.session_state["chunked_processing"] = False
+                st.session_state["should_auto_continue"] = False  # Explicitly stop auto-continue
+                
+                # Create proper audio ID for processed files tracking
+                processed_audio_id = f"{st.session_state['processing_audio_name']}.{st.session_state['processing_file_extension']}"
+                # Also try to find the original uploaded file size for the ID
+                if st.session_state.get('original_audio_id'):
+                    st.session_state["processed_audio_files"].add(st.session_state['original_audio_id'])
+                st.session_state["processed_audio_files"].add(processed_audio_id)
+                
+                st.write(f"🔍 Added to processed: {processed_audio_id}")
+        
+    # Auto-continue processing marker (will be handled at the bottom after showing survey)
+    chunks_len = len(st.session_state.get("current_chunks", []))
+    current_idx = st.session_state.get("current_chunk_index", 0)
+    is_chunking = st.session_state.get("chunked_processing", False)
+    
+    st.session_state["should_auto_continue"] = (
+        is_chunking and current_idx < chunks_len
+    )
+    
+    # Debug info
+    if is_chunking:
+        st.write(f"🔍 Debug: chunked_processing={is_chunking}, current_index={current_idx}, total_chunks={chunks_len}, should_auto_continue={st.session_state['should_auto_continue']}")
         
     # Create two columns for file uploaders
     col1, col2 = st.columns(2)
@@ -62,18 +147,39 @@ def main():
             # Create a unique identifier for this audio file
             audio_id = f"{uploaded_audio.name}_{uploaded_audio.size}"
             
-            if audio_id not in st.session_state["processed_audio_files"]:
+            # Check if we should process this audio file
+            already_processed = audio_id in st.session_state["processed_audio_files"]
+            currently_processing = st.session_state["chunked_processing"]
+            
+            st.write(f"🔍 Audio Debug: audio_id={audio_id[:20]}..., already_processed={already_processed}, currently_processing={currently_processing}")
+            
+            if not already_processed and not currently_processing:
                 audio_name, file_extension = save_uploaded_audio(uploaded_audio)
-                st.session_state["df"] = process_recording(
-                    audio_name, 
-                    st.session_state["df"],
-                    st.session_state["survey_data"], 
-                    file_extension
-                )
-                st.session_state["processed_audio_files"].add(audio_id)
-                st.write(f'Survey answers successfully updated!')
-            else:
+                
+                # Start chunked processing
+                with st.spinner("Transcribing audio and preparing chunks..."):
+                    # Transcribe audio
+                    transcript = process_audio_file(audio_name, file_extension)
+                    if transcript:
+                        # Create chunks
+                        chunks = chunk_transcription_by_sentences(transcript, sentences_per_chunk, overlap_sentences)
+                        
+                        # Set up session state for chunked processing
+                        st.session_state["current_chunks"] = chunks
+                        st.session_state["current_chunk_index"] = 0
+                        st.session_state["processing_audio_name"] = audio_name
+                        st.session_state["processing_file_extension"] = file_extension
+                        st.session_state["original_audio_id"] = audio_id  # Store original ID for tracking
+                        st.session_state["chunked_processing"] = True
+                        
+                        st.success(f"🎵 Audio transcribed! Created {len(chunks)} chunks. Starting processing...")
+                        st.rerun()
+                    else:
+                        st.error("Failed to transcribe audio")
+            elif audio_id in st.session_state["processed_audio_files"]:
                 st.write("This audio file has already been processed.")
+            elif st.session_state["chunked_processing"]:
+                st.info("Currently processing chunks. Please wait...")
         elif uploaded_audio and "df" not in st.session_state:
             st.error("Please upload a survey file first!")
 
@@ -81,7 +187,7 @@ def main():
     if st.button("Reset Survey"):
         if os.path.exists("data/answers.json"):
             os.remove("data/answers.json")
-        for key in ["survey_processed", "processed_audio_files", "df", "survey_data", "current_survey_name", "excel_data", "list_human_edit"]:
+        for key in ["survey_processed", "processed_audio_files", "df", "survey_data", "current_survey_name", "excel_data", "list_human_edit", "chunked_processing", "current_chunks", "current_chunk_index", "processing_audio_name", "processing_file_extension", "should_auto_continue", "original_audio_id"]:
             if key in st.session_state:
                 del st.session_state[key]
         st.rerun()
@@ -107,6 +213,11 @@ def main():
         st.write("No survey loaded yet. Please upload a survey file and then an audio file.")
         return
     else:
+        # Calculate and display progress bar
+        progress_data = calculate_progress_data(st.session_state["df"])
+        progress_html = create_progress_bar(progress_data)
+        st.markdown(progress_html, unsafe_allow_html=True)
+        
         st.header("Survey Questions")
         
         # Create two columns for questions
@@ -138,6 +249,19 @@ def main():
                 answer_data = extract_answer_data(row)
 
                 display_edit_window(question, answer_data, 'unanswered', idx)
+
+    # Handle auto-continue processing at the end (after showing survey results)
+    should_continue = st.session_state.get("should_auto_continue", False)
+    st.write(f"🔍 Debug at end: should_auto_continue={should_continue}")
+    
+    if should_continue:
+        st.write("🔄 Auto-continuing to next chunk...")
+        st.session_state["should_auto_continue"] = False  # Reset flag
+        import time
+        time.sleep(2)  # Give user time to see the results
+        st.rerun()
+    else:
+        st.write("⏹️ Processing complete or stopped.")
 
 if __name__ == "__main__":
     main() 

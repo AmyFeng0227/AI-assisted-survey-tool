@@ -284,3 +284,103 @@ def create_excel_download(df, survey_name="survey"):
         st.error(f"Error creating Excel file: {e}")
         return None
 
+
+def calculate_progress_data(df):
+    """
+    Calculate the distribution of questions by certainty level.
+    
+    Args:
+        df (pd.DataFrame): The survey DataFrame
+        
+    Returns:
+        dict: Dictionary with counts and percentages for each certainty level
+    """
+    total_questions = len(df)
+    
+    # Count questions by certainty level
+    high_count = len(df[df['certainty'] == 'high'])
+    medium_count = len(df[df['certainty'] == 'medium'])
+    low_count = len(df[df['certainty'] == 'low'])
+    unanswered_count = len(df[df['certainty'].isna()])
+    
+    # Calculate percentages
+    high_pct = (high_count / total_questions) * 100 if total_questions > 0 else 0
+    medium_pct = (medium_count / total_questions) * 100 if total_questions > 0 else 0
+    low_pct = (low_count / total_questions) * 100 if total_questions > 0 else 0
+    unanswered_pct = (unanswered_count / total_questions) * 100 if total_questions > 0 else 0
+    
+    return {
+        'total': total_questions,
+        'high': {'count': high_count, 'percentage': high_pct},
+        'medium': {'count': medium_count, 'percentage': medium_pct},
+        'low': {'count': low_count, 'percentage': low_pct},
+        'unanswered': {'count': unanswered_count, 'percentage': unanswered_pct}
+    }
+
+
+def create_progress_bar(progress_data):
+    """
+    Create HTML for a progress bar showing question completion status.
+    
+    Args:
+        progress_data (dict): Dictionary with counts and percentages for each certainty level
+        
+    Returns:
+        str: HTML string for the progress bar
+    """
+    total = progress_data['total']
+    high = progress_data['high']
+    medium = progress_data['medium']
+    low = progress_data['low']
+    unanswered = progress_data['unanswered']
+    
+    # Calculate completion percentage
+    answered_count = high['count'] + medium['count'] + low['count']
+    completion_pct = (answered_count / total) * 100 if total > 0 else 0
+    
+    # Ensure minimum width for visibility (at least 3% if there are any questions in that category)
+    high_width = max(high['percentage'], 3.0) if high['count'] > 0 else 0
+    medium_width = max(medium['percentage'], 3.0) if medium['count'] > 0 else 0
+    low_width = max(low['percentage'], 3.0) if low['count'] > 0 else 0
+    unanswered_width = max(unanswered['percentage'], 3.0) if unanswered['count'] > 0 else 0
+    
+    # Normalize if total width exceeds 100%
+    total_width = high_width + medium_width + low_width + unanswered_width
+    if total_width > 100:
+        high_width = (high_width / total_width) * 100
+        medium_width = (medium_width / total_width) * 100
+        low_width = (low_width / total_width) * 100
+        unanswered_width = (unanswered_width / total_width) * 100
+    
+    # Build progress segments
+    segments = []
+    if high['count'] > 0:
+        segments.append(f'<div class="progress-segment high-progress" style="width: {high_width:.1f}%;" title="High certainty: {high["count"]} questions">{high["count"]}</div>')
+    if medium['count'] > 0:
+        segments.append(f'<div class="progress-segment medium-progress" style="width: {medium_width:.1f}%;" title="Medium certainty: {medium["count"]} questions">{medium["count"]}</div>')
+    if low['count'] > 0:
+        segments.append(f'<div class="progress-segment low-progress" style="width: {low_width:.1f}%;" title="Low certainty: {low["count"]} questions">{low["count"]}</div>')
+    if unanswered['count'] > 0:
+        segments.append(f'<div class="progress-segment unanswered-progress" style="width: {unanswered_width:.1f}%;" title="Unanswered: {unanswered["count"]} questions">{unanswered["count"]}</div>')
+    
+    segments_html = '\n            '.join(segments)
+    
+    progress_html = f"""
+    <div class="progress-container">
+        <div class="progress-header">
+            <h3>Survey Progress: {answered_count}/{total} questions answered ({completion_pct:.1f}%)</h3>
+        </div>
+        <div class="progress-bar">
+            {segments_html}
+        </div>
+        <div class="progress-legend">
+            <span class="legend-item high-legend">High ({high['count']})</span>
+            <span class="legend-item medium-legend">Medium ({medium['count']})</span>
+            <span class="legend-item low-legend">Low ({low['count']})</span>
+            <span class="legend-item unanswered-legend">Unanswered ({unanswered['count']})</span>
+        </div>
+    </div>
+    """
+    
+    return progress_html
+

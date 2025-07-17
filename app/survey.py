@@ -68,11 +68,19 @@ def format_survey_questions(survey_data):
     """
     questions_text = ""
     
+    # Check if we're in a Streamlit context
+    try:
+        # Try to access session state - if it fails, we're not in Streamlit
+        human_edited_list = st.session_state.get("list_human_edit", [])
+    except (AttributeError, RuntimeError):
+        # Not in Streamlit context - include all questions
+        human_edited_list = []
+    
     for question in survey_data:
         # Only include questions that haven't been human-edited
         # Convert question ID to float to match the data type in list_human_edit
         question_id_float = float(question['id'])
-        if question_id_float not in st.session_state["list_human_edit"]:
+        if question_id_float not in human_edited_list:
             questions_text += f"{question['id']}: [{question['field']}] {question['question']} ({question['type']}"
             if question['options'] != ['']:
                 questions_text += f": {', '.join(question['options'])})\n"
