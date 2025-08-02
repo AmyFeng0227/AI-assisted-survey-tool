@@ -116,31 +116,31 @@ surveytool/
 
 ## Key Components
 
-### Audio Processing (`app/audio.py`)
+#### Audio Processing (`app/audio.py`)
 - OpenAI Whisper integration for speech-to-text conversion
 - Configurable text chunking with sentence-based segmentation
 
-### Survey Management (`app/survey.py`)
+#### Survey Management (`app/survey.py`)
 - Excel template processing
 - Creating survey string as preparation for prompts
 - DataFrame creation
 
-### Prompt Engineering (`app/prompt.py`)
+#### Prompt Engineering (`app/prompt.py`)
 - Compiling AI prompts
 
-### Answer Extraction (`app/answer.py`)
+#### Answer Extraction (`app/answer.py`)
 - Calling LLM for response
 - JSON parsing and validation with retry logic
 - Answer updating and DataFrame management
 
-### Main Workflow (`app/main_workflow.py`)
+#### Main Workflow (`app/main_workflow.py`)
 - Orchestrates the complete processing pipeline
 
-### System Configuration (`app/config.py`)
+#### System Configuration (`app/config.py`)
 - OpenAI client initialization and API settings
 - Chunking parameters (sentences per chunk, overlap)
 
-### Evaluation System (`app/evaluation.py`)
+#### Evaluation System (`app/evaluation.py`)
 - Accuracy metrics (TP, TN, FP, FN)
 - Performance tracking (RTT, token usage, retry counts)
 
@@ -158,13 +158,6 @@ Best performing configurations from testing:
 - 2-sentence overlap consistently yields slightly higher accuracy
 - Smaller chunks provide better user experience but higher token costs
 - Strong correlation (r=0.97) between latency and token usage
-
-
-- **Visual Indicators**: Color-coded confidence levels for rapid assessment
-
-## License
-
-This project is developed for research purposes. Implementation in production environments requires consideration of data privacy regulations and ethical frameworks.
 
 ## Acknowledgments
 
