@@ -1,194 +1,171 @@
-# AI-Assisted Survey Tool
+# AI-Assisted Survey Tool for Social Work Case Management
 
-An intelligent survey processing system that uses AI to automatically extract and categorize answers from audio recordings of survey responses. The tool features advanced chunking strategies, real-time processing, and comprehensive evaluation capabilities.
+A minimum viable product (MVP) exploring the feasibility of AI-driven survey completion in social work settings. This prototype addresses critical challenges in survey administration by leveraging large language models to automatically extract structured responses from conversational audio recordings while preserving essential human oversight.
 
-## 🚀 Features
+## Technical Implementation
 
-### Core Functionality
-- **Audio Processing**: Convert audio recordings to text using OpenAI Whisper
-- **Intelligent Chunking**: Process long transcripts in optimal chunks with configurable overlap
-- **AI-Powered Answer Extraction**: Use GPT models to extract structured answers from transcript chunks
-- **Real-time Processing**: Streamlit-based web interface for interactive processing
-- **Answer Validation**: Compare AI-extracted answers with human-validated responses
+### Core Features
 
-### Advanced Features
-- **Configurable Chunking**: Adjust sentence count and overlap for optimal performance
-- **Evaluation Framework**: Comprehensive testing of different chunking strategies
-- **Batch Processing**: Run multiple evaluations across different configurations
-- **Progress Tracking**: Real-time progress indicators and detailed logging
-- **Export Capabilities**: Download results as Excel files with formatted data
+#### Data Processing Pipeline
+- **Transcription**: Automatic conversion of audio recordings to text using OpenAI Whisper
+- **Chunking Strategy**: Configurable text segmentation (default: 12 sentences per chunk, 2-sentence overlap)
+- **Structured Extraction**: AI-powered survey responses using GPT-4o-mini
+- **Quality Assurance**: Confidence scoring and human review mechanisms
 
-### Evaluation & Analysis
-- **Performance Metrics**: Accuracy, response time, token usage analysis
-- **Statistical Analysis**: Trimmed means, outlier detection, comprehensive reporting
-- **Multi-round Testing**: Run evaluations across multiple rounds for reliability
-- **Summary Generation**: Automated averaging and reporting of evaluation results
+#### User Interface
+- **Streamlit-based Frontend**: Web application interface for survey and audio file uploads
+- **Progress Visualization**: Real-time completion status bar
+- **Response Management**: Color-coded confidence levels and manual editing capabilities
+- **Export Functionality**: Downloadable survey results in structured Excel format
 
-## 📊 Evaluation Results
+#### Evaluation Framework
+- **Performance Metrics**: Accuracy assessment using true/false positive and negative classifications
+- **Latency Analysis**: Round-trip time measurement with trimmed mean calculations
+- **Cost Analysis**: Token usage tracking for computational efficiency evaluation
 
-Based on comprehensive testing across multiple configurations:
-
-### Top Performing Configurations
-| Configuration | Accuracy | Response Time | Token Usage |
-|---------------|----------|---------------|-------------|
-| 4 sentences, 2 overlap | 80.3% | 7.03s | 137,336 tokens |
-| 12 sentences, 2 overlap | 78.7% | 11.57s | 33,543 tokens |
-| 20 sentences, 2 overlap | 77.3% | 24.10s | 18,824 tokens |
-
-### Key Findings
-- **Overlap of 2** generally performs better than 0 or 4 overlap
-- **Smaller sentence counts** (4-12) with overlap of 2 show the best accuracy
-- **Token usage** increases significantly with smaller sentence sizes due to more chunks
-- **Response times** are generally faster with smaller sentence sizes
-
-## 🛠️ Installation
+## Installation
 
 ### Prerequisites
 - Python 3.8 or higher
-- OpenAI API key
-- Audio processing capabilities
+- OpenAI API access (Whisper and GPT-4o-mini models)
 
 ### Setup
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/AmyFeng0227/AI-assisted-survey-tool.git
-   cd AI-assisted-survey-tool
-   ```
+```bash
+# Clone repository
+git clone https://github.com/AmyFeng0227/AI-assisted-survey-tool.git
+cd AI-assisted-survey-tool
 
-2. **Create virtual environment**
-   ```bash
-   python -m venv .venv
-   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-   ```
+# Create virtual environment
+python -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
 
-3. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
+# Install dependencies
+pip install -r requirements.txt
 
-4. **Set up environment variables**
-   Create a `.env` file in the root directory:
-   ```
-   OPENAI_API_KEY=your_openai_api_key_here
-   ```
+# Configure environment variables
+echo "OPENAI_API_KEY_survey=your_api_key_here" > .env
+```
 
-## 🚀 Usage
+## Usage
 
-### Web Interface (Recommended)
+### Web Interface
 ```bash
 streamlit run main.py
 ```
-Access the application at `http://localhost:8501`
+Access at `http://localhost:8501`
 
-### Command Line Interface
+### Workflow
+1. **Upload Survey Template**: Excel file with question definitions, types, and response options
+2. **Upload Audio Recording**: Interview recordings (MP3, M4A, WAV)
+3. **Automated Processing**: Transcript processed chunk by chunk, and update interface, with AI confidence flagging
+4. **Human Oversight**: Manual editing allow and overwrites AI answers
+5. **Export Results**: Download completed survey as Excel file
+
+The following diagram illustrates the complete processing pipeline:
+
+![System Flowchart](images/system_flowchart.png)
+
+### Evaluation Scripts
 ```bash
-# Process a single recording
+# Single evaluation run
 python run_evaluation.py
 
-# Run batch evaluations
+# Batch evaluation across configurations
 python run_batch_evaluation.py
 
-# Generate evaluation summaries
+# Results analysis
 python evaluation/summarize_evaluation_results.py
 ```
 
-### Configuration
-Adjust chunking parameters in `app/config.py`:
+## Configuration
+
+Primary settings in `app/config.py`:
 ```python
-n_sentences = 12  # Number of sentences per chunk
-n_overlap = 2     # Number of overlapping sentences between chunks
+n_sentences = 12  # Sentences per chunk
+n_overlap = 2     # Overlapping sentences between chunks
+model = "o4-mini-2025-04-16"  # Language model specification
 ```
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 surveytool/
-├── app/                          # Core application modules
-│   ├── audio.py                  # Audio processing and transcription
-│   ├── config.py                 # Configuration settings
-│   ├── evaluation.py             # Evaluation and metrics calculation
-│   ├── main_workflow.py          # Main processing workflow
-│   ├── prompt.py                 # AI prompt generation
-│   ├── survey.py                 # Survey data processing
-│   └── answer.py                 # Answer extraction and validation
-├── data/                         # Data storage
-│   ├── recordings/               # Audio files
-│   ├── surveys/                  # Survey templates
-│   └── answers.json              # AI-generated answers
-├── evaluation/                   # Evaluation framework
-│   ├── evaluation_results_round*.jsonl  # Evaluation results
-│   ├── evaluation_results_summary.jsonl # Averaged results
-│   ├── log_chunks.jsonl          # Detailed processing logs
-│   ├── answers_human.json        # Human-validated answers
-│   └── summarize_evaluation_results.py  # Summary generation
+├── app/                          # Core processing modules
+│   ├── audio.py                  # Speech-to-text transcription
+│   ├── config.py                 # System configuration and API clients
+│   ├── evaluation.py             # Performance metrics calculation
+│   ├── main_workflow.py          # Primary processing pipeline
+│   ├── prompt.py                 # Language model prompt engineering
+│   ├── survey.py                 # Survey data structure management
+│   └── answer.py                 # Response extraction and validation
+├── evaluation/                   # Assessment framework
+│   ├── summarize_evaluation_results.py  # Results analysis
+│   ├── run_evaluation.py        # Single evaluation script
+│   ├── run_evaluation.bat       # Windows batch script for evaluation
+│   └── run_batch_evaluation.py  # Batch evaluation script
 ├── ui/                          # User interface
 │   ├── survey_app.py            # Streamlit application
-│   └── styles.css               # Custom styling
-├── main.py                      # Main application entry point
-├── run_evaluation.py            # Evaluation script
-├── run_batch_evaluation.py      # Batch evaluation script
+│   └── styles.css               # Interface styling
+├── .streamlit/                  # Streamlit configuration
+│   └── config.toml             # Development settings
+├── main.py                      # Application entry point
 └── requirements.txt             # Python dependencies
 ```
 
-## 🔧 Configuration
+**Note**: The `data/` directory and evaluation result files are created automatically when the application runs. These are gitignored to protect sensitive data.
 
-### Chunking Parameters
-- **n_sentences**: Number of sentences per chunk (4-20 recommended)
-- **n_overlap**: Overlapping sentences between chunks (0-4 recommended)
-- **Total chunks**: Automatically calculated based on transcript length
+## Key Components
 
-### Evaluation Parameters
-- **Accuracy metrics**: TP_TN, FP_W, FP_U, FN calculations
-- **Performance metrics**: RTT (response time), token usage, retry counts
-- **Statistical analysis**: Trimmed means with 10% outlier removal
+### Audio Processing (`app/audio.py`)
+- OpenAI Whisper integration for speech-to-text conversion
+- Configurable text chunking with sentence-based segmentation
 
-## 📈 Performance Analysis
+### Survey Management (`app/survey.py`)
+- Excel template processing
+- Creating survey string as preparation for prompts
+- DataFrame creation
 
-### Response Time Analysis
-- **Trimmed Mean RTT**: Calculated by removing top/bottom 10% of response times
-- **Total Processing Time**: RTT × Total chunks for complete transcript processing
-- **Retry Analysis**: Tracks failed requests and retry attempts
+### Prompt Engineering (`app/prompt.py`)
+- Compiling AI prompts
 
-### Accuracy Metrics
-- **TP_TN**: True positives and true negatives (correct answers)
-- **FP_W**: False positives - wrong answers
-- **FP_U**: False positives - unnecessary answers
-- **FN**: False negatives - missing answers
+### Answer Extraction (`app/answer.py`)
+- Calling LLM for response
+- JSON parsing and validation with retry logic
+- Answer updating and DataFrame management
 
-## 🧪 Evaluation Framework
+### Main Workflow (`app/main_workflow.py`)
+- Orchestrates the complete processing pipeline
 
-### Running Evaluations
-1. **Single Round**: `python run_evaluation.py`
-2. **Batch Processing**: `python run_batch_evaluation.py`
-3. **Summary Generation**: `python evaluation/summarize_evaluation_results.py`
+### System Configuration (`app/config.py`)
+- OpenAI client initialization and API settings
+- Chunking parameters (sentences per chunk, overlap)
 
-### Evaluation Data
-- **Round Results**: Individual evaluation rounds stored in JSONL format
-- **Summary Results**: Averaged results across multiple rounds
-- **Detailed Logs**: Per-chunk processing details for analysis
+### Evaluation System (`app/evaluation.py`)
+- Accuracy metrics (TP, TN, FP, FN)
+- Performance tracking (RTT, token usage, retry counts)
 
-## 🤝 Contributing
+## Evaluation Results
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+Best performing configurations from testing:
 
-## 📝 License
+| Configuration | Accuracy | Trimmed Mean RTT | Token Usage | Total Chunks |
+|---------------|----------|------------------|-------------|--------------|
+| 4 sentences, 2 overlap | 80.3% | 7.03s | 137,336 tokens | 67 |
+| 12 sentences, 2 overlap | 78.7% | 11.57s | 33,543 tokens | 14 |
+| 20 sentences, 2 overlap | 77.3% | 24.10s | 18,824 tokens | 8 |
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+**Key Findings:**
+- 2-sentence overlap consistently yields slightly higher accuracy
+- Smaller chunks provide better user experience but higher token costs
+- Strong correlation (r=0.97) between latency and token usage
 
-## 🙏 Acknowledgments
 
-- OpenAI for providing the GPT API and Whisper transcription service
-- Streamlit for the web application framework
-- The research community for evaluation methodologies
+- **Visual Indicators**: Color-coded confidence levels for rapid assessment
 
-## 📞 Support
+## License
 
-For questions or issues, please open an issue on GitHub or contact the development team.
+This project is developed for research purposes. Implementation in production environments requires consideration of data privacy regulations and ethical frameworks.
 
----
+## Acknowledgments
 
-**Note**: This tool is designed for research and evaluation purposes. Ensure compliance with data privacy regulations when processing survey responses. 
+Developed with input from SOS Children's Villages for social work case management context. Uses OpenAI's language model technologies and Streamlit framework. 
