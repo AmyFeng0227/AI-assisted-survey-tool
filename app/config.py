@@ -6,3 +6,7 @@ import os
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY_survey"))
 model="o4-mini-2025-04-16"
+
+# Chunking Settings
+n_sentences = 20
+n_overlap = 2

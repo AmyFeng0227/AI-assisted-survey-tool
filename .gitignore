@@ -1,10 +1,15 @@
-/.env
-/.venv
-/projektbeskrivning_ShangchanhuiFeng.docx
-/test_files/
-/data/
-/code_test.ipynb
-/code_dv.ipynb
+# Environment and virtual environment
+.env
+.venv/
+venv/
+env/
+
+# Project-specific files
+projektbeskrivning_ShangchanhuiFeng.docx
+test_files/
+dev.ipynb
+code_test.ipynb
+code_dv.ipynb
 
 # Python cache and compiled files
 __pycache__/
@@ -14,11 +19,21 @@ __pycache__/
 *.pyc
 *.pyo
 
-# Data files - temporary tracking and output files
-*.csv
-*.xlsx
-*.m4a
-*.json
+# Data files - specific exclusions
+data/answers.json
+data/recordings/
+data/logging_df/
+evaluation/log_chunks.jsonl
+evaluation/evaluation_results_round*.jsonl
+evaluation/evaluation_results_summary.jsonl
+evaluation/evaluation_results_summary.csv
+evaluation/answers_human.json
+
+# Survey and recording files (keep structure but ignore content)
+data/surveys/*.xlsx
+data/recordings/*.m4a
+data/recordings/*.mp3
+data/recordings/*.wav
 
 # Log files
 *.log
@@ -68,3 +83,16 @@ wheels/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Jupyter notebook checkpoints
+.ipynb_checkpoints/
+
+# pytest
+.pytest_cache/
+.coverage
+htmlcov/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json

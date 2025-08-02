@@ -1,12 +1,11 @@
+from .config import client, model
 from .survey import process_survey_excel, format_survey_questions
-from .audio import process_audio_file, chunk_transcription_by_sentences
 from .prompt import create_prompt_without_answers, create_prompt_with_answers
 from .answer import process_ai_response, update_answers_file, update_answers_dataframe, get_ai_response
+from .evaluation import log_chunk
 import json
 import os
 import time
-from datetime import datetime
-import streamlit as st
 
 def prepare_survey(excel_name):
     """
@@ -48,11 +47,12 @@ def process_single_chunk(chunk_text, chunk_number, total_chunks, df, survey_data
     Returns:
         pd.DataFrame: Updated DataFrame with new answers from this chunk
     """
-    import time
-    
-    chunk_start = time.time()
+    # Import here to get the current dynamic values
+    from .config import n_sentences, n_overlap
+
     print(f"\n📄 Processing chunk {chunk_number}/{total_chunks}")
-    
+
+
     # Format survey questions
     survey_questions = format_survey_questions(survey_data)
     if not survey_questions:
@@ -60,7 +60,6 @@ def process_single_chunk(chunk_text, chunk_number, total_chunks, df, survey_data
         return df
     
     # Check for existing answers and create prompt for this chunk
-    prompt_start = time.time()
     if os.path.exists("data/answers.json"):
         # Get previous answers as string
         with open("data/answers.json", "r") as f:
@@ -78,31 +77,41 @@ def process_single_chunk(chunk_text, chunk_number, total_chunks, df, survey_data
         # Generate initial prompt for this chunk
         prompt = create_prompt_without_answers(survey_questions, chunk_text)
     
-    prompt_duration = time.time() - prompt_start
-    print(f"   📋 Chunk {chunk_number} prompt created in {prompt_duration:.2f}s")
-    
     # Get AI response for this chunk
+    retry = 0
     ai_start = time.time()
-    response_text = get_ai_response(prompt)
+    response_text, total_tokens = get_ai_response(prompt)
     ai_duration = time.time() - ai_start
     print(f"   🤖 Chunk {chunk_number} AI response received in {ai_duration:.2f}s")
     
     # Process response and update tracking for this chunk
-    process_start = time.time()
-    new_answers = process_ai_response(response_text, prompt)
-    if new_answers:
-        update_answers_file(new_answers, "ai")
-        df = update_answers_dataframe(df, new_answers, "ai")
-        print(f"   ✅ Chunk {chunk_number} added {len(new_answers)} new/updated answers")
+    result = process_ai_response(response_text, prompt)
+    if result is not None:
+        new_answers, retry = result
+        if new_answers:
+            update_answers_file(new_answers, "ai")
+            df = update_answers_dataframe(df, new_answers, "ai")
+            print(f"   ✅ Chunk {chunk_number} added {len(new_answers)} new/updated answers")
+        else:
+            print(f"   ℹ️ Chunk {chunk_number} produced no new answers")
     else:
-        print(f"   ℹ️ Chunk {chunk_number} produced no new answers")
+        print(f"   ❌ Chunk {chunk_number} failed to process after retries")
+        new_answers = []
+        retry = 3  # Max retries reached
     
-    process_duration = time.time() - process_start
-    print(f"   💾 Chunk {chunk_number} processing completed in {process_duration:.2f}s")
+    run_id = f"S{n_sentences}_O{n_overlap}_{chunk_number}_{total_chunks}"
+
+    row = {
+        "run_id": run_id,
+        "rtt": round(ai_duration, 1),
+        "retry": retry}
     
-    chunk_total = time.time() - chunk_start
-    print(f"   🕐 Chunk {chunk_number} total time: {chunk_total:.2f}s")
+    # Only add total_tokens if we have it
+    if total_tokens is not None:
+        row["total_tokens"] = total_tokens
     
+    log_chunk(row)
+
     return df
 
 # Example code to run the functions

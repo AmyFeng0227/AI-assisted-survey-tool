@@ -6,6 +6,8 @@ import streamlit as st
 from ui.survey_app import save_uploaded_survey, save_uploaded_audio, divide_and_sort_questions, extract_question_object, extract_answer_data, display_edit_window, create_excel_download, calculate_progress_data, create_progress_bar
 from app.main_workflow import prepare_survey, process_single_chunk
 from app.audio import process_audio_file, chunk_transcription_by_sentences
+from app.config import n_sentences, n_overlap
+from app.evaluation import evaluate_ai_answers, log_chunk, summarize_all_chunks
 
 
 
@@ -54,23 +56,7 @@ def main():
     if "should_auto_continue" not in st.session_state:
         st.session_state["should_auto_continue"] = False
         
-    # Sidebar for chunking settings
-    st.sidebar.header("⚙️ Chunking Settings")
-    sentences_per_chunk = st.sidebar.slider(
-        "Sentences per chunk", 
-        min_value=3, 
-        max_value=15, 
-        value=10, 
-        help="Number of sentences to include in each chunk"
-    )
-    overlap_sentences = st.sidebar.slider(
-        "Overlap sentences", 
-        min_value=0, 
-        max_value=5, 
-        value=2, 
-        help="Number of sentences to overlap between chunks"
-    )
-    st.sidebar.info(f"📊 Each chunk will have {sentences_per_chunk} sentences with {overlap_sentences} sentences overlapping from the previous chunk.")
+
         
     # Handle chunked processing
     if st.session_state["chunked_processing"]:
@@ -102,15 +88,11 @@ def main():
                 st.success(f'🎉 All {len(chunks)} chunks processed successfully!')
                 st.session_state["chunked_processing"] = False
                 st.session_state["should_auto_continue"] = False  # Explicitly stop auto-continue
-                
-                # Create proper audio ID for processed files tracking
-                processed_audio_id = f"{st.session_state['processing_audio_name']}.{st.session_state['processing_file_extension']}"
-                # Also try to find the original uploaded file size for the ID
+                summarize_all_chunks(n_sentences, n_overlap, len(chunks))
+                evaluate_ai_answers(n_sentences, n_overlap)
+                # Mark this audio file as processed
                 if st.session_state.get('original_audio_id'):
                     st.session_state["processed_audio_files"].add(st.session_state['original_audio_id'])
-                st.session_state["processed_audio_files"].add(processed_audio_id)
-                
-                st.write(f"🔍 Added to processed: {processed_audio_id}")
         
     # Auto-continue processing marker (will be handled at the bottom after showing survey)
     chunks_len = len(st.session_state.get("current_chunks", []))
@@ -121,10 +103,8 @@ def main():
         is_chunking and current_idx < chunks_len
     )
     
-    # Debug info
-    if is_chunking:
-        st.write(f"🔍 Debug: chunked_processing={is_chunking}, current_index={current_idx}, total_chunks={chunks_len}, should_auto_continue={st.session_state['should_auto_continue']}")
-        
+
+
     # Create two columns for file uploaders
     col1, col2 = st.columns(2)
 
@@ -151,8 +131,6 @@ def main():
             already_processed = audio_id in st.session_state["processed_audio_files"]
             currently_processing = st.session_state["chunked_processing"]
             
-            st.write(f"🔍 Audio Debug: audio_id={audio_id[:20]}..., already_processed={already_processed}, currently_processing={currently_processing}")
-            
             if not already_processed and not currently_processing:
                 audio_name, file_extension = save_uploaded_audio(uploaded_audio)
                 
@@ -161,8 +139,9 @@ def main():
                     # Transcribe audio
                     transcript = process_audio_file(audio_name, file_extension)
                     if transcript:
+                        
                         # Create chunks
-                        chunks = chunk_transcription_by_sentences(transcript, sentences_per_chunk, overlap_sentences)
+                        chunks = chunk_transcription_by_sentences(transcript, n_sentences, n_overlap)
                         
                         # Set up session state for chunked processing
                         st.session_state["current_chunks"] = chunks
@@ -252,7 +231,6 @@ def main():
 
     # Handle auto-continue processing at the end (after showing survey results)
     should_continue = st.session_state.get("should_auto_continue", False)
-    st.write(f"🔍 Debug at end: should_auto_continue={should_continue}")
     
     if should_continue:
         st.write("🔄 Auto-continuing to next chunk...")

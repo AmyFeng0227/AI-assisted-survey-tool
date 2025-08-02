@@ -17,7 +17,7 @@ def get_ai_response(prompt):
         model=model,
         messages=[{"role": "user", "content": prompt}]
     )
-    return response.choices[0].message.content
+    return response.choices[0].message.content, response.usage.total_tokens
 
 # === Answer processing ===
 
@@ -30,27 +30,28 @@ def process_ai_response(response_text, prompt):
         prompt (str): Original prompt used to generate response
         
     Returns:
-        list: Processed answers
+        tuple: (new_answers, retry_count) or None if failed
     """
-    try:
-        new_answers = json.loads(response_text)
-        print(f"New answers: {new_answers}")
-        return new_answers
-    except json.JSONDecodeError as e:
-        if str(e) == "Expecting value: line 1 column 1 (char 0)":
-            print("Invalid JSON response, retrying API call...")
-            # Retry the API call once
-            new_response = get_ai_response(prompt)
-            try:
-                new_answers = json.loads(new_response)  
-                print(f"New answers: {new_answers}")
-                return new_answers
-            except json.JSONDecodeError as e2:
-                print(f"Error processing retry response: {e2}")
+    retry = 0
+    max_retries = 3
+    current_response = response_text
+    while retry < max_retries:
+        try:
+            new_answers = json.loads(current_response)
+            print(f"New answers: {new_answers}")
+            return new_answers, retry
+        except json.JSONDecodeError as e:
+            if str(e) == "Expecting value: line 1 column 1 (char 0)":
+                print(f"Invalid JSON response, retrying API call... (attempt {retry+1})")
+                retry += 1
+                if retry < max_retries:
+                    current_response, _ = get_ai_response(prompt)
+                else:
+                    print(f"Error processing AI response after {max_retries} attempts: {e}")
+                    return None
+            else:
+                print(f"Error processing AI response: {e}")
                 return None
-        else:
-            print(f"Error processing AI response: {e}")
-            return None
 
 
 
