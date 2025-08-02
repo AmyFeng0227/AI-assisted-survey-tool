@@ -1,0 +1,270 @@
+[
+  {
+    "field": "info",
+    "id": "1",
+    "question": "Participant ID",
+    "type": "number",
+    "options": [
+      ""
+    ]
+  },
+  {
+    "field": "economy",
+    "id": "2",
+    "question": "Source of Income",
+    "type": "multiple choice",
+    "options": [
+      "work",
+      "CSN (student aid)",
+      "financial assistance",
+      "social services/foster home/supportive housing or similar",
+      "Social Insurance Agency",
+      "unemployment benefits",
+      "other"
+    ]
+  },
+  {
+    "field": "economy",
+    "id": "3",
+    "question": "Are you in debt?",
+    "type": "single choice",
+    "options": [
+      "yes",
+      "no"
+    ]
+  },
+  {
+    "field": "economy",
+    "id": "4",
+    "question": "Are you stressed about your financial situation?",
+    "type": "single choice",
+    "options": [
+      "Not at all stressed",
+      "Slightly stressed",
+      "Quite stressed",
+      "Very stressed"
+    ]
+  },
+  {
+    "field": "economy",
+    "id": "5",
+    "question": "Would you like to receive support on economy? And what?",
+    "type": "single choice",
+    "options": [
+      "yes",
+      "no"
+    ]
+  },
+  {
+    "field": "economy",
+    "id": "6",
+    "question": "Is the person self-sufficient?",
+    "type": "single choice",
+    "options": [
+      "fully",
+      "partly",
+      "no"
+    ]
+  },
+  {
+    "field": "accommodation",
+    "id": "7",
+    "question": "How do you live today?/How is your accomondation situation today?",
+    "type": "text",
+    "options": [
+      ""
+    ]
+  },
+  {
+    "field": "accommodation",
+    "id": "8",
+    "question": "How long can you stay where you are living today?",
+    "type": "text",
+    "options": [
+      ""
+    ]
+  },
+  {
+    "field": "accommodation",
+    "id": "9",
+    "question": "Do you enjoy living where you are today?",
+    "type": "single choice",
+    "options": [
+      "not at all",
+      "somewhat",
+      "mostly",
+      "very much"
+    ]
+  },
+  {
+    "field": "accommodation",
+    "id": "10",
+    "question": "Are you on a housing waiting list?",
+    "type": "single choice",
+    "options": [
+      "yes",
+      "no"
+    ]
+  },
+  {
+    "field": "accommodation",
+    "id": "11",
+    "question": "Do you know how housing waiting lists work and how to apply for an apartment?",
+    "type": "single choice",
+    "options": [
+      "yes",
+      "no"
+    ]
+  },
+  {
+    "field": "accommodation",
+    "id": "12",
+    "question": "Would you like help with your housing situation? If yes, how?",
+    "type": "single choice",
+    "options": [
+      "yes",
+      "no"
+    ]
+  },
+  {
+    "field": "health",
+    "id": "13",
+    "question": "How do you feel?",
+    "type": "text",
+    "options": [
+      ""
+    ]
+  },
+  {
+    "field": "health",
+    "id": "14",
+    "question": "How would you rate your pyhsical health?",
+    "type": "single choice",
+    "options": [
+      "Very poor",
+      "Quite poor",
+      "Quite good",
+      "Very good"
+    ]
+  },
+  {
+    "field": "health",
+    "id": "15",
+    "question": "How would you rate your mental health?",
+    "type": "single choice",
+    "options": [
+      "Very poor",
+      "Quite poor",
+      "Quite good",
+      "Very good"
+    ]
+  },
+  {
+    "field": "health",
+    "id": "16",
+    "question": "Do you currently have any ongoing contact with healthcare services?",
+    "type": "single choice",
+    "options": [
+      "yes",
+      "no"
+    ]
+  },
+  {
+    "field": "health",
+    "id": "17",
+    "question": "Do you want support for your mental or physical health?",
+    "type": "single choice",
+    "options": [
+      "yes",
+      "no"
+    ]
+  },
+  {
+    "field": "health",
+    "id": "18",
+    "question": "Is there anything that would be good for us or your support person to know about your health? (e.g., allergies, diabetes, panic attacks, self-harm, eating disorders, obsessive thoughts) If yes, what?",
+    "type": "single choice",
+    "options": [
+      "yes",
+      "no"
+    ]
+  },
+  {
+    "field": "social network",
+    "id": "19",
+    "question": "Do you enjoy your free time?",
+    "type": "single choice",
+    "options": [
+      "not at all",
+      "somewhat",
+      "mostly",
+      "very much"
+    ]
+  },
+  {
+    "field": "social network",
+    "id": "20",
+    "question": "How would you like your free time to be? Is there anything you would like to start or try?",
+    "type": "text",
+    "options": [
+      ""
+    ]
+  },
+  {
+    "field": "social network",
+    "id": "21",
+    "question": "Do you have people around you who make you feel good?",
+    "type": "single choice",
+    "options": [
+      "yes",
+      "no"
+    ]
+  },
+  {
+    "field": "social network",
+    "id": "22",
+    "question": "How often do you feel lonely?",
+    "type": "single choice",
+    "options": [
+      "Never",
+      "Occasionally",
+      "Frequently",
+      "Almost always"
+    ]
+  },
+  {
+    "field": "work",
+    "id": "23",
+    "question": "What do you do during the day?",
+    "type": "multiple choice",
+    "options": [
+      "Working",
+      "Studying",
+      "Internship",
+      "Unemployed",
+      "On sick leave"
+    ]
+  },
+  {
+    "field": "study",
+    "id": "24",
+    "question": "How does it go with your study?",
+    "type": "single choice",
+    "options": [
+      "Very poor",
+      "Quite poor",
+      "Quite good",
+      "Very good"
+    ]
+  },
+  {
+    "field": "study",
+    "id": "25",
+    "question": "Do you want support related to study? What kind of support would that be?",
+    "type": "single choice",
+    "options": [
+      "yes",
+      "no"
+    ]
+  }
+]

@@ -96,25 +96,32 @@ def evaluate_ai_answers(n_sentences, n_overlap):
     with open(human_path, encoding='utf-8') as f:
         human = json.load(f)
 
-    AI_right = 0
-    AI_wrong = 0
+    TP_TN = 0  # human a, AI a, or human null, AI null. True positive & True negatives
+    FP_W = 0  # human a, AI b
+    FP_U = 0 # human null, AI a
+    FN = 0 # human a, AI null
+
+
 
     #human blank answers 
     for qid in questions_blank:
         ai_answer = ai.get(qid, {}).get("answer")
         if ai_answer is not None:
-            AI_wrong += 1
+            FP_U += 1
         else:
-            AI_right += 1
+            TP_TN += 1
 
     for qid in qids_to_check:
         ai_answer   = ai.get(qid, {}).get("answer")
         human_answer = human.get(qid, {}).get("answer")
         # If AI answer matches human answer, then AI_right +=1, otherwise AI_wrong +=1
-        if ai_answer is not None and str(ai_answer).strip() == str(human_answer).strip():
-            AI_right += 1
+        if ai_answer is None:
+            FN += 1
+        elif str(ai_answer).strip() == str(human_answer).strip():
+            TP_TN += 1
         else:
-            AI_wrong += 1
+            FP_W += 1
+
 
     # Read existing results to find the most recent row for this configuration
     result_path = "evaluation/evaluation_results.jsonl"
@@ -137,7 +144,7 @@ def evaluate_ai_answers(n_sentences, n_overlap):
         row = all_rows[i]
         if (row.get("n_sentences") == n_sentences and 
             row.get("n_overlap") == n_overlap and
-            "AI_right" not in row):  # Row doesn't have AI accuracy data yet
+            "TP_TN" not in row):  # Row doesn't have AI accuracy data yet
             print(f"Found matching row at index {i}")
             existing_data = row
             all_rows[i] = row  # Will be updated below
@@ -146,9 +153,11 @@ def evaluate_ai_answers(n_sentences, n_overlap):
     if existing_data:
         # Merge AI accuracy data into existing row
         existing_data.update({
-            "AI_right": AI_right,
-            "AI_wrong": AI_wrong,
-            "Accuracy": round(AI_right / 22, 2)
+            "TP_TN": TP_TN,
+            "FP_W": FP_W,
+            "FP_U": FP_U,
+            "FN": FN,
+            "Accuracy": round(TP_TN / 22, 2)
         })
         
         # Rewrite the entire file with updated data
@@ -161,9 +170,11 @@ def evaluate_ai_answers(n_sentences, n_overlap):
         result = {
             "n_sentences": n_sentences,
             "n_overlap": n_overlap,
-            "AI_right": AI_right,
-            "AI_wrong": AI_wrong,
-            "Accuracy": round(AI_right / 22, 2)
+            "TP_TN": TP_TN,
+            "FP_W": FP_W,
+            "FP_U": FP_U,
+            "FN": FN,
+            "Accuracy": round(TP_TN / 22, 2)
         }
         with open(result_path, "a") as f:
             f.write(json.dumps(result) + "\n")
